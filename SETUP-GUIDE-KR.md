@@ -65,7 +65,17 @@ az group create --name MyResourceGroup --location centralus
 az group list --output table
 ```
 
-### 4단계: setup.sh 실행
+### 4단계: 프로젝트 빌드 (Windows 사용자)
+
+**Windows에서 먼저 빌드 (WSL 사용자 권장):**
+```powershell
+# PowerShell에서 실행
+dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+```
+
+이렇게 하면 WSL에 .NET SDK가 없어도 스크립트가 이미 빌드된 파일을 사용합니다.
+
+### 5단계: setup.sh 실행
 
 **Windows (Git Bash 권장):**
 ```bash
@@ -74,6 +84,11 @@ bash setup.sh
 
 **WSL:**
 ```bash
+# .NET SDK 없이 실행 (Windows에서 미리 빌드한 경우)
+bash setup.sh
+
+# 또는 zip 설치 후 실행
+sudo apt install zip
 bash setup.sh
 ```
 
@@ -157,7 +172,41 @@ az login
    az group list --output table
    ```
 
-### 문제 5: Git Push 인증 실패
+### 문제 5: `dotnet: command not found` (WSL)
+
+**원인:** WSL에 .NET SDK가 설치되어 있지 않음
+
+**해결 방법 1: Windows에서 미리 빌드 (권장)**
+```powershell
+# PowerShell에서 실행
+dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+```
+
+그 다음 WSL에서 setup.sh 실행:
+```bash
+bash setup.sh  # 이미 빌드된 publish/ 폴더를 자동으로 사용
+```
+
+**해결 방법 2: WSL에 .NET SDK 설치**
+```bash
+# Ubuntu/Debian
+wget https://dot.net/v1/dotnet-install.sh
+bash dotnet-install.sh --channel 8.0
+export PATH="$HOME/.dotnet:$PATH"
+```
+
+### 문제 6: `zip: command not found` (WSL)
+
+**원인:** WSL에 zip이 설치되어 있지 않음
+
+**해결 방법:**
+```bash
+sudo apt install zip
+```
+
+스크립트는 Python이 있으면 자동으로 대체하지만, zip을 설치하는 것이 더 빠릅니다.
+
+### 문제 7: Git Push 인증 실패
 
 **원인:** 배포 자격 증명 설정 실패
 
@@ -165,7 +214,7 @@ az login
 개선된 setup.sh는 이제 `az webapp deploy`를 사용하여 이 문제를 우회합니다. 
 스크립트가 자동으로 .NET 프로젝트를 빌드하고 ZIP 파일로 배포합니다.
 
-### 문제 6: "The resource you are looking for has been removed"
+### 문제 8: "The resource you are looking for has been removed"
 
 **원인:** 웹앱은 생성되었지만 코드가 배포되지 않음
 
@@ -202,12 +251,17 @@ az webapp deploy --resource-group <RESOURCE_GROUP_NAME> \
    - 실패 시 의미 있는 에러 메시지 출력
    - 색상 코드로 가독성 향상
 
-3. **자동 빌드 및 배포**
-   - .NET 프로젝트 자동 빌드
-   - ZIP 패키지 생성
-   - `az webapp deploy` 사용 (git push보다 안정적)
+3. **유연한 빌드 옵션**
+   - .NET SDK가 설치되어 있으면 자동 빌드
+   - .NET SDK가 없어도 기존 `publish/` 폴더 사용
+   - Windows에서 빌드 후 WSL에서 배포 가능
 
-4. **기존 리소스 처리**
+4. **자동 배포**
+   - ZIP 패키지 자동 생성
+   - `az webapp deploy` 사용 (git push보다 안정적)
+   - zip 명령어가 없으면 Python으로 대체
+
+5. **기존 리소스 처리**
    - 기존 Git remote가 있으면 제거 후 재생성
    - 변경사항이 없으면 커밋 건너뛰기
 
@@ -236,10 +290,29 @@ az webapp deploy --resource-group <RESOURCE_GROUP_NAME> \
 2. 프로젝트 디렉토리로 이동
 3. `bash setup.sh` 실행
 
-**WSL 사용 시 주의사항:**
+**WSL 사용 시:**
+1. **Windows에서 먼저 빌드 (권장)**
+   ```powershell
+   # PowerShell에서 실행
+   dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+   ```
+
+2. **WSL에서 실행**
+   ```bash
+   # WSL에서 Azure 로그인 (WSL과 Windows는 별개 세션)
+   az login
+   
+   # zip 설치 (처음 한 번만)
+   sudo apt install zip
+   
+   # 스크립트 실행 (이미 빌드된 파일 사용)
+   bash setup.sh
+   ```
+
+**주의사항:**
 - WSL과 Windows의 Azure CLI 세션이 별개임
 - WSL에서 별도로 `az login` 필요
-- Azure CLI 버전 충돌 가능성
+- .NET SDK를 WSL에 설치하지 않아도 됨 (Windows에서 빌드한 파일 사용)
 
 ### Linux/macOS 사용자
 

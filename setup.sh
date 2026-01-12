@@ -193,8 +193,24 @@ if command -v zip &> /dev/null; then
         exit 1
     fi
     print_success "Deployment package created: $(du -h deploy.zip | cut -f1)"
+elif [ "$IS_GIT_BASH" = true ] && command -v powershell.exe &> /dev/null; then
+    # Git Bash on Windows - use PowerShell to create zip
+    print_info "Using PowerShell to create deployment package..."
+    cd ..
+    
+    # Convert to Windows path
+    WIN_PATH=$(pwd -W 2>/dev/null || pwd | sed 's|^/c/|C:/|' | sed 's|/|\\|g')
+    
+    # Use PowerShell Compress-Archive
+    powershell.exe -Command "Compress-Archive -Path '${WIN_PATH}\\publish\\*' -DestinationPath '${WIN_PATH}\\deploy.zip' -Force" 2>&1
+    
+    if [ ! -f "deploy.zip" ]; then
+        print_error "Failed to create deploy.zip with PowerShell"
+        exit 1
+    fi
+    print_success "Deployment package created with PowerShell"
 else
-    print_warning "zip command not found. Trying alternative method..."
+    print_warning "zip command not found. Trying Python fallback..."
     cd ..
     
     # Try to use Python to create zip if available

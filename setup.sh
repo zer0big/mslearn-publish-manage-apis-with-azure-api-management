@@ -147,29 +147,63 @@ fi
 
 # Create deployment package
 print_info "Creating deployment package..."
-cd publish
+
+# Get absolute path before changing directory
+SCRIPT_DIR=$(pwd)
+
+cd publish || { print_error "Failed to enter publish directory"; exit 1; }
+
 if command -v zip &> /dev/null; then
-    zip -r ../deploy.zip . > /dev/null
+    zip -r ../deploy.zip . > /dev/null 2>&1
+    cd ..
+    
+    # Verify zip file was created
+    if [ ! -f "deploy.zip" ]; then
+        print_error "Failed to create deploy.zip"
+        exit 1
+    fi
+    print_success "Deployment package created: $(du -h deploy.zip | cut -f1)"
 else
     print_warning "zip command not found. Trying alternative method..."
-    # Use tar as fallback
-    tar -czf ../deploy.tar.gz . > /dev/null
     cd ..
-    print_warning "Created tar.gz instead of zip. Converting..."
+    
     # Try to use Python to create zip if available
     if command -v python3 &> /dev/null; then
-        python3 -c "import zipfile, os, glob; z = zipfile.ZipFile('deploy.zip', 'w'); [z.write(f, os.path.relpath(f, 'publish')) for f in glob.glob('publish/**/*', recursive=True) if os.path.isfile(f)]; z.close()"
-        rm -f deploy.tar.gz
+        python3 << 'EOF'
+import zipfile
+import os
+
+print("Creating zip with Python...")
+with zipfile.ZipFile('deploy.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+    for root, dirs, files in os.walk('publish'):
+        for file in files:
+            file_path = os.path.join(root, file)
+            arcname = os.path.relpath(file_path, 'publish')
+            zipf.write(file_path, arcname)
+print("Done!")
+EOF
+        if [ ! -f "deploy.zip" ]; then
+            print_error "Failed to create zip with Python"
+            exit 1
+        fi
+        print_success "Deployment package created with Python"
     else
         print_error "Cannot create zip file. Please install zip: sudo apt install zip"
         exit 1
     fi
 fi
-[ -f ../deploy.zip ] || cd ..
+
+# Verify deployment package
+if [ ! -f "${SCRIPT_DIR}/deploy.zip" ]; then
+    print_error "Deployment package not found at: ${SCRIPT_DIR}/deploy.zip"
+    exit 1
+fi
 
 # Deploy using az webapp deploy (more reliable than git push)
 print_info "Deploying to Azure Web App..."
-if az webapp deploy --resource-group $RESOURCE_GROUP --name $apiappname --src-path ./deploy.zip --type zip; then
+print_info "Package location: ${SCRIPT_DIR}/deploy.zip"
+
+if az webapp deploy --resource-group $RESOURCE_GROUP --name $apiappname --src-path "${SCRIPT_DIR}/deploy.zip" --type zip 2>&1; then
     print_success "Deployment completed successfully!"
 else
     print_error "Deployment failed. Trying alternative method..."

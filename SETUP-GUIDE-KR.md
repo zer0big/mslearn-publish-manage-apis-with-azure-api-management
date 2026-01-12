@@ -1,103 +1,324 @@
 # Azure API Management 설정 가이드 (한국어)
 
-이 가이드는 Windows 환경에서 발생할 수 있는 문제들과 해결 방법을 다룹니다.
+> 💡 **이 가이드는 누구나 쉽게 따라할 수 있도록 작성되었습니다!**
 
-## 📋 목차
+## 🎯 빠른 시작 (환경별 선택)
 
-1. [사전 요구사항](#사전-요구사항)
-2. [설치 방법](#설치-방법)
-3. [일반적인 문제 해결](#일반적인-문제-해결)
-4. [상세 설명](#상세-설명)
+**어떤 환경을 사용하시나요?**
 
-## 사전 요구사항
+- [🪟 Windows (Git Bash) - **가장 쉬움! 추천**](#windows-git-bash-사용자-추천)
+- [🐧 WSL (Windows Subsystem for Linux)](#wsl-사용자)
+- [🍎 Linux/macOS](#linuxmacos-사용자)
 
-### 필수 도구
+---
 
-1. **Azure 구독**
-   - Azure 계정이 필요합니다
-   - 무료 계정: https://azure.microsoft.com/free/
+## 🪟 Windows (Git Bash) 사용자 (추천)
 
-2. **Azure CLI**
-   - 설치: https://docs.microsoft.com/cli/azure/install-azure-cli
-   - 버전 확인: `az --version`
+### ✅ 준비물 확인
 
-3. **.NET SDK**
-   - 설치: https://dotnet.microsoft.com/download
-   - 버전 확인: `dotnet --version`
+| 항목 | 확인 방법 | 설치 링크 |
+|------|----------|-----------|
+| Azure CLI | PowerShell에서 `az --version` | [설치하기](https://docs.microsoft.com/cli/azure/install-azure-cli-windows) |
+| .NET SDK | PowerShell에서 `dotnet --version` | [설치하기](https://dotnet.microsoft.com/download) |
+| Git | PowerShell에서 `git --version` | [설치하기](https://git-scm.com/downloads) |
 
-4. **Git**
-   - 설치: https://git-scm.com/downloads
-   - Git Bash가 함께 설치됩니다 (Windows)
+### 📝 실행 단계
 
-5. **Bash 셸 환경** (다음 중 하나)
-   - **Git Bash** (권장 - Windows)
-   - **WSL** (Windows Subsystem for Linux)
-   - **Linux/macOS 터미널**
+#### 1️⃣ Git Bash 열기
+- Windows 검색에서 "Git Bash" 검색 후 실행
 
-## 설치 방법
-
-### 1단계: 리포지토리 클론
-
+#### 2️⃣ Azure 로그인
 ```bash
-git clone https://github.com/zer0big/mslearn-publish-manage-apis-with-azure-api-management.git
-cd mslearn-publish-manage-apis-with-azure-api-management
+az login
+```
+✅ **성공하면:** 브라우저가 열리고 로그인 완료 메시지가 표시됩니다.
+
+#### 3️⃣ 프로젝트 폴더로 이동
+```bash
+cd /d/your-path/mslearn-publish-manage-apis-with-azure-api-management
 ```
 
-### 2단계: Azure 로그인
+#### 4️⃣ 스크립트 실행
+```bash
+bash setup.sh
+```
 
+#### 5️⃣ 완료 대기 (약 5-10분)
+```
+=== Setting username and password for Git ... (1/7) ===
+=== Creating App Service plan in FREE tier ... (2/7) ===
+=== Creating API App ... (3/7) ===
+=== Setting the account-level deployment credentials ... (4/7) ===
+=== Setting Git remote ... (5/7) ===
+=== Git add and commit ... (6/7) ===
+=== Building and deploying application ... (7/7) ===
+
+SUCCESS: Deployment completed successfully!
+
+========================================
+       IMPORTANT INFORMATION
+========================================
+
+Swagger URL: https://shoecoapi12345.azurewebsites.net/swagger
+```
+
+#### 6️⃣ Swagger URL 접속
+위에 표시된 URL을 브라우저에서 열어서 API 확인
+
+---
+
+## 🐧 WSL 사용자
+
+### ⚠️ 중요: WSL은 추가 설정이 필요합니다!
+
+WSL에는 .NET SDK가 설치되어 있지 않으므로, **Windows에서 먼저 빌드**하는 것을 권장합니다.
+
+### ✅ 준비물 확인
+
+**WSL에서 확인:**
+```bash
+az --version     # Azure CLI 있어야 함
+zip --version    # zip 있어야 함 (없으면 설치)
+```
+
+**Windows PowerShell에서 확인:**
+```powershell
+dotnet --version  # .NET SDK 있어야 함
+```
+
+### 📝 실행 단계
+
+#### 1️⃣ Windows PowerShell에서 프로젝트 빌드
+```powershell
+# 프로젝트 폴더로 이동
+cd D:\your-path\mslearn-publish-manage-apis-with-azure-api-management
+
+# 빌드 실행 (1분 소요)
+dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+```
+
+✅ **성공하면:** `publish/` 폴더가 생성되고 파일들이 들어있습니다.
+
+#### 2️⃣ WSL 터미널 열기
+- PowerShell에서 `wsl` 입력 또는
+- Windows Terminal에서 Ubuntu/WSL 선택
+
+#### 3️⃣ WSL에서 Azure 로그인
 ```bash
 az login
 ```
 
-브라우저가 열리면 Azure 계정으로 로그인하세요.
-
-### 3단계: 리소스 그룹 확인 (선택사항)
-
-리소스 그룹이 없다면 생성:
-
+#### 4️⃣ zip 설치 (처음 한 번만)
 ```bash
-az group create --name MyResourceGroup --location centralus
+sudo apt update
+sudo apt install zip -y
 ```
 
-기존 리소스 그룹 확인:
-
+#### 5️⃣ 프로젝트 폴더로 이동
 ```bash
-az group list --output table
+# Windows C:\ 드라이브는 /mnt/c/ 로 접근
+cd /mnt/c/Users/your-name/path/to/mslearn-publish-manage-apis-with-azure-api-management
 ```
 
-### 4단계: 프로젝트 빌드 (Windows 사용자)
+💡 **팁:** PowerShell에서 `pwd` 명령어로 현재 경로를 확인하고, `C:\`를 `/mnt/c/`로 바꾸세요.
 
-**Windows에서 먼저 빌드 (WSL 사용자 권장):**
-```powershell
-# PowerShell에서 실행
-dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
-```
-
-이렇게 하면 WSL에 .NET SDK가 없어도 스크립트가 이미 빌드된 파일을 사용합니다.
-
-### 5단계: setup.sh 실행
-
-**Windows (Git Bash 권장):**
+#### 6️⃣ 스크립트 실행
 ```bash
 bash setup.sh
 ```
 
-**WSL:**
-```bash
-# .NET SDK 없이 실행 (Windows에서 미리 빌드한 경우)
-bash setup.sh
-
-# 또는 zip 설치 후 실행
-sudo apt install zip
-bash setup.sh
+✅ **확인:** `publish/` 폴더를 찾으면 다음 메시지가 표시됩니다:
+```
+WARNING: .NET SDK not found, but using existing publish folder.
+Using pre-built application from ./publish directory...
 ```
 
-**Linux/macOS:**
+#### 7️⃣ 완료 대기 및 URL 확인
+```
+SUCCESS: Deployment completed successfully!
+
+========================================
+       IMPORTANT INFORMATION
+========================================
+
+Swagger URL: https://shoecoapi12345.azurewebsites.net/swagger
+```
+
+---
+
+## 🍎 Linux/macOS 사용자
+
+### ✅ 준비물 확인
+
 ```bash
+az --version      # Azure CLI
+dotnet --version  # .NET SDK
+zip --version     # zip (대부분 기본 설치됨)
+```
+
+### 📝 실행 단계
+
+#### 1️⃣ Azure 로그인
+```bash
+az login
+```
+
+#### 2️⃣ 프로젝트 폴더로 이동
+```bash
+cd ~/path/to/mslearn-publish-manage-apis-with-azure-api-management
+```
+
+#### 3️⃣ 스크립트 실행
+```bash
+chmod +x setup.sh
 ./setup.sh
 ```
 
-## 일반적인 문제 해결
+---
+
+## ❓ 문제 해결
+
+### 🔴 "command not found" 에러가 나요!
+
+**`az: command not found`**
+```bash
+# Azure CLI 설치 필요
+# Windows: https://docs.microsoft.com/cli/azure/install-azure-cli-windows
+# Ubuntu/Debian: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+**`dotnet: command not found` (WSL)**
+```bash
+# ✅ 해결 방법 1 (권장): Windows에서 빌드
+# PowerShell에서:
+dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+
+# ✅ 해결 방법 2: WSL에 .NET 설치
+wget https://dot.net/v1/dotnet-install.sh
+bash dotnet-install.sh --channel 8.0
+export PATH="$HOME/.dotnet:$PATH"
+```
+
+**`zip: command not found` (WSL/Linux)**
+```bash
+sudo apt update
+sudo apt install zip -y
+```
+
+### 🔴 `$'\r': command not found` 에러
+
+**원인:** Windows 줄바꿈 문제 (CRLF)
+
+**해결:**
+```bash
+# 방법 1: dos2unix 사용
+sudo apt install dos2unix -y
+dos2unix setup.sh
+bash setup.sh
+
+# 방법 2: VS Code에서 수정
+# 1. setup.sh 파일 열기
+# 2. 오른쪽 하단 "CRLF" 클릭
+# 3. "LF" 선택
+# 4. 저장 (Ctrl+S)
+```
+
+### 🔴 "User does not exist in MSAL token cache"
+
+**원인:** Azure 로그인 필요
+
+**해결:**
+```bash
+# MSAL 캐시 삭제 후 재로그인
+rm -rf ~/.azure/msal_*.bin
+az login
+```
+
+### 🔴 "argument --resource-group/-g: expected one argument"
+
+**원인:** 리소스 그룹이 없음
+
+**해결:**
+```bash
+# 리소스 그룹 생성
+az group create --name MyResourceGroup --location centralus
+
+# 또는 기존 리소스 그룹 확인
+az group list --output table
+```
+
+### 🔴 웹사이트 접속 시 "리소스를 찾을 수 없음" 에러
+
+**원인:** 배포가 완료되지 않았거나 앱이 시작 중
+
+**해결:**
+1. **5분 정도 기다리기** - 앱이 시작되는 데 시간이 걸립니다
+2. Azure Portal에서 확인:
+   - https://portal.azure.com 접속
+   - "App Services" 검색
+   - 생성된 앱 선택
+   - 상태가 "Running"인지 확인
+
+---
+
+## 💡 추가 팁
+
+### 🎨 에러 메시지 색상 의미
+
+- 🔴 **빨간색 (ERROR):** 치명적 오류, 반드시 해결 필요
+- 🟡 **노란색 (WARNING):** 경고, 무시해도 대부분 괜찮음
+- 🟢 **녹색 (SUCCESS):** 성공 메시지
+
+### 🔍 로그 확인
+
+```bash
+# 앱 로그 실시간 확인
+az webapp log tail --resource-group <RESOURCE_GROUP> --name <APP_NAME>
+
+# 배포 로그 확인
+az webapp log deployment show --resource-group <RESOURCE_GROUP> --name <APP_NAME>
+```
+
+### 🗑️ 리소스 정리 (테스트 후)
+
+```bash
+# 특정 앱만 삭제
+az webapp delete --resource-group <RESOURCE_GROUP> --name <APP_NAME>
+
+# 리소스 그룹 전체 삭제
+az group delete --name <RESOURCE_GROUP> --yes --no-wait
+```
+
+---
+
+## 📞 도움이 필요하신가요?
+
+### 1. 환경 정보 수집
+```bash
+# 이 명령어들을 실행하고 결과를 복사하세요
+echo "=== Git Version ==="
+git --version
+
+echo "=== Azure CLI Version ==="
+az --version
+
+echo "=== .NET Version ==="
+dotnet --version 2>&1 || echo "Not installed"
+
+echo "=== Current Directory ==="
+pwd
+
+echo "=== setup.sh Line Endings ==="
+file setup.sh 2>&1 || echo "file command not found"
+```
+
+### 2. GitHub Issues에 질문하기
+- https://github.com/zer0big/mslearn-publish-manage-apis-with-azure-api-management/issues
+- 위에서 수집한 환경 정보와 에러 메시지를 함께 올려주세요
+
+---
+
+## 📚 참고 자료
 
 ### 문제 1: `$'\r': command not found` 에러
 
@@ -182,51 +403,33 @@ az login
 dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
 ```
 
-그 다음 WSL에서 setup.sh 실행:
-```bash
-bash setup.sh  # 이미 빌드된 publish/ 폴더를 자동으로 사용
-```
+## 📚 참고 자료
 
-**해결 방법 2: WSL에 .NET SDK 설치**
-```bash
-# Ubuntu/Debian
-wget https://dot.net/v1/dotnet-install.sh
-bash dotnet-install.sh --channel 8.0
-export PATH="$HOME/.dotnet:$PATH"
-```
+- [Azure CLI 공식 문서](https://docs.microsoft.com/cli/azure/)
+- [Azure App Service 문서](https://docs.microsoft.com/azure/app-service/)
+- [Azure API Management 문서](https://docs.microsoft.com/azure/api-management/)
+- [.NET 다운로드](https://dotnet.microsoft.com/download)
+- [Git for Windows](https://gitforwindows.org/)
 
-### 문제 6: `zip: command not found` (WSL)
+---
 
-**원인:** WSL에 zip이 설치되어 있지 않음
+**만든 사람:** [@zer0big](https://github.com/zer0big)  
+**원본 리포지토리:** [MicrosoftDocs/mslearn-publish-manage-apis-with-azure-api-management](https://github.com/MicrosoftDocs/mslearn-publish-manage-apis-with-azure-api-management)  
+**마지막 업데이트:** 2026-01-12
 
-**해결 방법:**
-```bash
-sudo apt install zip
-```
+---
 
-스크립트는 Python이 있으면 자동으로 대체하지만, zip을 설치하는 것이 더 빠릅니다.
+## 🎉 성공하셨나요?
 
-### 문제 7: Git Push 인증 실패
+Swagger URL이 정상적으로 열리면 성공입니다! 
 
-**원인:** 배포 자격 증명 설정 실패
+이제 다음 단계로 진행하세요:
+- Azure Portal에서 API Management 서비스 생성
+- Swagger JSON을 사용하여 API 가져오기
+- API 정책 설정 및 테스트
 
-**해결 방법:** 
-개선된 setup.sh는 이제 `az webapp deploy`를 사용하여 이 문제를 우회합니다. 
-스크립트가 자동으로 .NET 프로젝트를 빌드하고 ZIP 파일로 배포합니다.
-
-### 문제 8: "The resource you are looking for has been removed"
-
-**원인:** 웹앱은 생성되었지만 코드가 배포되지 않음
-
-**해결 방법:**
-
-수동 배포:
-```bash
-# 1. 프로젝트 빌드
-dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
-
-# 2. ZIP 파일 생성
-cd publish
+**도움이 되었다면 GitHub에 ⭐ 부탁드립니다!**  
+https://github.com/zer0big/mslearn-publish-manage-apis-with-azure-api-management
 zip -r ../app.zip .
 cd ..
 

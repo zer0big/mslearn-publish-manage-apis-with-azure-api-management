@@ -1,3 +1,95 @@
+# Azure API Management - Publishing and Managing APIs
+
+This repository contains the sample code for the Microsoft Learn module on publishing and managing APIs with Azure API Management.
+
+> **한국어 가이드**: [SETUP-GUIDE-KR.md](SETUP-GUIDE-KR.md) 파일을 참고하세요.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Azure subscription
+- Azure CLI installed and configured
+- .NET SDK (for building the sample application)
+- Git
+- Bash shell (Linux, macOS, WSL on Windows, or Git Bash)
+
+### Setup Instructions
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/zer0big/mslearn-publish-manage-apis-with-azure-api-management.git
+   cd mslearn-publish-manage-apis-with-azure-api-management
+   ```
+
+2. **Login to Azure**
+   ```bash
+   az login
+   ```
+
+3. **Run the setup script**
+   ```bash
+   bash setup.sh
+   ```
+
+The script will:
+- Create an Azure App Service plan
+- Deploy a sample Shoe Company API
+- Configure deployment credentials
+- Build and deploy the application
+- Provide you with the Swagger URL
+
+## 📝 Important Notes
+
+### For Windows Users
+
+If you encounter line ending issues (CRLF errors), the repository now includes a `.gitattributes` file that automatically handles this. However, if you cloned before this fix:
+
+**Option 1: Using dos2unix**
+```bash
+dos2unix setup.sh
+chmod +x setup.sh
+bash setup.sh
+```
+
+**Option 2: Using VS Code**
+1. Open `setup.sh`
+2. Click "CRLF" in the bottom-right corner
+3. Select "LF"
+4. Save the file
+
+**Option 3: Re-clone the repository** (recommended)
+```bash
+git clone https://github.com/zer0big/mslearn-publish-manage-apis-with-azure-api-management.git
+```
+
+### Improvements Over Original
+
+This fork includes several improvements:
+- ✅ **Fixed line ending issues** - `.gitattributes` ensures shell scripts always use LF
+- ✅ **Better error handling** - Script checks prerequisites and provides helpful error messages
+- ✅ **Enhanced deployment** - Uses `az webapp deploy` for more reliable deployments
+- ✅ **Colored output** - Better visibility of errors, warnings, and success messages
+- ✅ **Automatic build** - Builds and deploys the .NET application automatically
+- ✅ **Korean documentation** - Added comprehensive Korean setup guide
+
+## 🛠️ Troubleshooting
+
+See [SETUP-GUIDE-KR.md](SETUP-GUIDE-KR.md) for detailed troubleshooting steps in Korean.
+
+Common issues:
+- **Line ending errors**: Ensure you're using LF line endings (not CRLF)
+- **Azure CLI not found**: Install Azure CLI from https://docs.microsoft.com/cli/azure/install-azure-cli
+- **Not logged in to Azure**: Run `az login` first
+- **No resource group**: Create one with `az group create --name MyResourceGroup --location centralus`
+
+## 📖 Original Repository
+
+This is a fork of the official Microsoft Learn repository with improvements for better cross-platform compatibility.
+
+Original: https://github.com/MicrosoftDocs/mslearn-publish-manage-apis-with-azure-api-management
+
+---
 
 # Contributing
 

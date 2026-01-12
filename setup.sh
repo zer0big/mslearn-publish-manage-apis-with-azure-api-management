@@ -118,18 +118,54 @@ fi
 
 printf "\n=== Building and deploying application ... (7/7) ===\n\n"
 
-# Build the project
-print_info "Building .NET project..."
-if ! dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish; then
-    print_error "Failed to build the project."
+# Check if .NET is installed or if publish folder already exists
+if [ -d "./publish" ] && [ -n "$(ls -A ./publish 2>/dev/null)" ]; then
+    print_warning ".NET SDK not found, but using existing publish folder."
+    print_info "Using pre-built application from ./publish directory..."
+elif command -v dotnet &> /dev/null; then
+    # Build the project
+    print_info "Building .NET project..."
+    if ! dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish; then
+        print_error "Failed to build the project."
+        exit 1
+    fi
+else
+    print_error ".NET SDK is not installed and no pre-built files found."
+    print_info ""
+    print_info "Option 1: Install .NET SDK in WSL/Linux"
+    print_info "  Ubuntu/Debian: wget https://dot.net/v1/dotnet-install.sh && bash dotnet-install.sh"
+    print_info "  Or visit: https://docs.microsoft.com/dotnet/core/install/linux"
+    print_info ""
+    print_info "Option 2: Build on Windows first, then run this script"
+    print_info "  In PowerShell/CMD:"
+    print_info "  cd <project-directory>"
+    print_info "  dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish"
+    print_info "  Then run: bash setup.sh"
+    print_info ""
     exit 1
 fi
 
 # Create deployment package
 print_info "Creating deployment package..."
 cd publish
-zip -r ../deploy.zip . > /dev/null
-cd ..
+if command -v zip &> /dev/null; then
+    zip -r ../deploy.zip . > /dev/null
+else
+    print_warning "zip command not found. Trying alternative method..."
+    # Use tar as fallback
+    tar -czf ../deploy.tar.gz . > /dev/null
+    cd ..
+    print_warning "Created tar.gz instead of zip. Converting..."
+    # Try to use Python to create zip if available
+    if command -v python3 &> /dev/null; then
+        python3 -c "import zipfile, os, glob; z = zipfile.ZipFile('deploy.zip', 'w'); [z.write(f, os.path.relpath(f, 'publish')) for f in glob.glob('publish/**/*', recursive=True) if os.path.isfile(f)]; z.close()"
+        rm -f deploy.tar.gz
+    else
+        print_error "Cannot create zip file. Please install zip: sudo apt install zip"
+        exit 1
+    fi
+fi
+[ -f ../deploy.zip ] || cd ..
 
 # Deploy using az webapp deploy (more reliable than git push)
 print_info "Deploying to Azure Web App..."

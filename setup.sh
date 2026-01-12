@@ -53,16 +53,30 @@ git config --global user.name "$GIT_USERNAME"
 git config --global user.email "$GIT_EMAIL"
 
 # Get resource group with error checking
-printf "\n=== Getting resource group ... ===\n\n"
+printf "\n=== Getting or creating resource group ... ===\n\n"
 RESOURCE_GROUP=$(az group list --query "[0].name" -o tsv)
 
 if [ -z "$RESOURCE_GROUP" ]; then
-    print_error "No resource group found. Please create a resource group first."
-    print_info "Run: az group create --name MyResourceGroup --location centralus"
-    exit 1
+    print_warning "No resource group found. Creating a new one..."
+    
+    # Generate unique resource group name
+    RG_NAME="RG-ShoeAPI-$(openssl rand -hex 3)"
+    LOCATION="centralus"
+    
+    print_info "Creating resource group: $RG_NAME in $LOCATION"
+    
+    if az group create --name "$RG_NAME" --location "$LOCATION" > /dev/null; then
+        RESOURCE_GROUP="$RG_NAME"
+        print_success "Resource group created: $RESOURCE_GROUP"
+    else
+        print_error "Failed to create resource group."
+        print_info "You can create it manually:"
+        print_info "  az group create --name MyResourceGroup --location centralus"
+        exit 1
+    fi
+else
+    print_success "Using existing resource group: $RESOURCE_GROUP"
 fi
-
-print_success "Using resource group: $RESOURCE_GROUP"
 
 # Create App Service plan
 PLAN_NAME=myPlan

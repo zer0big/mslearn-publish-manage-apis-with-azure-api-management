@@ -1,14 +1,255 @@
-# Azure API Management 설정 가이드 (한국어)
+# Azure API Management 설정 가이드
 
-> 💡 **이 가이드는 누구나 쉽게 따라할 수 있도록 작성되었습니다!**
+## 빠른 시작 - Windows 사용자 (Git Bash)
 
-## 🎯 빠른 시작 (환경별 선택)
+### 준비물
 
-**어떤 환경을 사용하시나요?**
+| 항목 | 확인 방법 | 설치 링크 |
+|------|----------|-----------|
+| Azure CLI | `az --version` | https://aka.ms/installazurecliwindows |
+| .NET SDK | `dotnet --version` | https://dotnet.microsoft.com/download |
+| Git | `git --version` | https://git-scm.com/downloads |
 
-- [🪟 Windows (Git Bash) - **가장 쉬움! 추천**](#windows-git-bash-사용자-추천)
-- [🐧 WSL (Windows Subsystem for Linux)](#wsl-사용자)
-- [🍎 Linux/macOS](#linuxmacos-사용자)
+### 실행 단계
+
+**1단계: PowerShell에서 프로젝트 빌드**
+
+PowerShell을 열고 다음 명령어 실행:
+
+```powershell
+# 프로젝트 폴더로 이동
+cd C:\Users\your-name\path\to\mslearn-publish-manage-apis-with-azure-api-management
+
+# 빌드 (1-2분 소요)
+dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+```
+
+성공하면 `publish` 폴더가 생성됩니다.
+
+**2단계: Git Bash에서 Azure 로그인 및 배포**
+
+Git Bash를 열고:
+
+```bash
+# Azure 로그인
+az login
+
+# 프로젝트 폴더로 이동 (PowerShell에서 사용한 것과 동일한 경로)
+cd /c/Users/your-name/path/to/mslearn-publish-manage-apis-with-azure-api-management
+
+# 배포 스크립트 실행
+bash setup.sh
+```
+
+**3단계: 완료 대기**
+
+약 5-10분 정도 소요됩니다. 다음과 같이 표시되면 성공:
+
+```
+SUCCESS: Deployment completed successfully!
+
+========================================
+       IMPORTANT INFORMATION
+========================================
+
+Swagger URL: https://shoecoapi12345.azurewebsites.net/swagger
+```
+
+**4단계: 확인**
+
+위 Swagger URL을 브라우저에서 열어 API 확인
+
+---
+
+## WSL 사용자
+
+### 준비물 확인
+
+WSL 터미널에서:
+```bash
+az --version     # Azure CLI
+zip --version    # zip 유틸리티
+```
+
+PowerShell에서:
+```powershell
+dotnet --version  # .NET SDK
+```
+
+### 실행 단계
+
+**1단계: PowerShell에서 빌드**
+
+```powershell
+cd D:\your-path\mslearn-publish-manage-apis-with-azure-api-management
+dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+```
+
+**2단계: WSL에서 Azure 로그인**
+
+```bash
+az login
+```
+
+**3단계: zip 설치 (처음 한 번만)**
+
+```bash
+sudo apt update
+sudo apt install zip -y
+```
+
+**4단계: 프로젝트 폴더로 이동**
+
+```bash
+# Windows C:\ 드라이브는 /mnt/c/ 로 접근
+cd /mnt/c/Users/your-name/path/to/mslearn-publish-manage-apis-with-azure-api-management
+```
+
+**5단계: 스크립트 실행**
+
+```bash
+bash setup.sh
+```
+
+---
+
+## 문제 해결
+
+### [Windows] publish 폴더를 찾을 수 없다는 에러
+
+**증상:**
+```
+ERROR: .NET SDK is not installed and no pre-built files found in publish/
+```
+
+**해결:**
+
+1. PowerShell을 **새 창으로** 열기
+2. 프로젝트 폴더로 이동
+3. 다음 명령어 실행:
+   ```powershell
+   dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish
+   ```
+4. 빌드 완료 후 Git Bash로 돌아와서 `bash setup.sh` 재실행
+
+### [Windows] 한글이 깨지거나 이모지가 안 보여요
+
+정상입니다. 기능에는 영향이 없으며, 에러 메시지만 잘 확인하시면 됩니다.
+
+### CRLF 경고 메시지
+
+```
+warning: in the working copy of '.gitattributes', CRLF will be replaced by LF
+```
+
+이 경고는 무시해도 됩니다. .gitattributes 파일이 자동으로 줄바꿈을 처리합니다.
+
+### "User does not exist in MSAL token cache"
+
+**해결:**
+```bash
+az login
+```
+
+Azure에 다시 로그인하세요.
+
+### "argument --resource-group/-g: expected one argument"
+
+**해결:**
+
+리소스 그룹을 생성하세요:
+```bash
+az group create --name MyResourceGroup --location centralus
+```
+
+또는 기존 리소스 그룹 확인:
+```bash
+az group list --output table
+```
+
+### 웹사이트 접속 시 "리소스를 찾을 수 없음"
+
+**원인:** 앱이 아직 시작 중입니다.
+
+**해결:**
+- 5분 정도 기다린 후 다시 시도
+- Azure Portal(https://portal.azure.com)에서 App Services 확인
+- 상태가 "Running"이 될 때까지 대기
+
+---
+
+## 로그 확인
+
+### 앱 로그 실시간 보기
+
+```bash
+az webapp log tail --resource-group <RESOURCE_GROUP> --name <APP_NAME>
+```
+
+### 배포 로그 확인
+
+```bash
+az webapp log deployment show --resource-group <RESOURCE_GROUP> --name <APP_NAME>
+```
+
+---
+
+## 리소스 정리 (테스트 후)
+
+### 특정 앱만 삭제
+
+```bash
+az webapp delete --resource-group <RESOURCE_GROUP> --name <APP_NAME>
+```
+
+### 리소스 그룹 전체 삭제 (주의!)
+
+```bash
+az group delete --name <RESOURCE_GROUP> --yes --no-wait
+```
+
+---
+
+## 추가 도움
+
+### 환경 정보 수집
+
+문제가 계속되면 다음 명령어로 환경 정보를 수집하세요:
+
+```bash
+echo "=== Git Version ==="
+git --version
+
+echo "=== Azure CLI Version ==="
+az --version | head -5
+
+echo "=== .NET Version ==="
+dotnet --version 2>&1 || echo "Not installed"
+
+echo "=== Current Directory ==="
+pwd
+
+echo "=== Publish Folder ==="
+ls -la publish/ 2>&1 || echo "publish folder not found"
+```
+
+### GitHub Issues
+
+문제를 보고하려면:
+- https://github.com/zer0big/mslearn-publish-manage-apis-with-azure-api-management/issues
+- 위 환경 정보와 에러 메시지 첨부
+
+---
+
+## 참고 자료
+
+- [Azure CLI 문서](https://docs.microsoft.com/cli/azure/)
+- [Azure App Service 문서](https://docs.microsoft.com/azure/app-service/)
+- [.NET 다운로드](https://dotnet.microsoft.com/download)
+
+---
+
+최종 업데이트: 2026-01-12
 
 ---
 

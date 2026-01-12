@@ -118,10 +118,27 @@ fi
 
 printf "\n=== Building and deploying application ... (7/7) ===\n\n"
 
+# Detect if running on Git Bash (Windows)
+IS_GIT_BASH=false
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]] || [[ -n "$MSYSTEM" ]]; then
+    IS_GIT_BASH=true
+    print_info "Detected Git Bash/Windows environment"
+fi
+
 # Check if .NET is installed or if publish folder already exists
+PUBLISH_FOUND=false
+
+# Try to find publish folder
 if [ -d "./publish" ] && [ -n "$(ls -A ./publish 2>/dev/null)" ]; then
-    print_warning ".NET SDK not found, but using existing publish folder."
-    print_info "Using pre-built application from ./publish directory..."
+    PUBLISH_FOUND=true
+    print_success "Found existing publish folder with built files"
+elif [ -d "publish" ] && [ -n "$(ls -A publish 2>/dev/null)" ]; then
+    PUBLISH_FOUND=true
+    print_success "Found existing publish folder with built files"
+fi
+
+if [ "$PUBLISH_FOUND" = true ]; then
+    print_info "Using pre-built application from publish directory..."
 elif command -v dotnet &> /dev/null; then
     # Build the project
     print_info "Building .NET project..."
@@ -130,17 +147,30 @@ elif command -v dotnet &> /dev/null; then
         exit 1
     fi
 else
-    print_error ".NET SDK is not installed and no pre-built files found."
+    print_error ".NET SDK is not installed and no pre-built files found in publish/"
     print_info ""
-    print_info "Option 1: Install .NET SDK in WSL/Linux"
-    print_info "  Ubuntu/Debian: wget https://dot.net/v1/dotnet-install.sh && bash dotnet-install.sh"
-    print_info "  Or visit: https://docs.microsoft.com/dotnet/core/install/linux"
-    print_info ""
-    print_info "Option 2: Build on Windows first, then run this script"
-    print_info "  In PowerShell/CMD:"
-    print_info "  cd <project-directory>"
-    print_info "  dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish"
-    print_info "  Then run: bash setup.sh"
+    
+    if [ "$IS_GIT_BASH" = true ]; then
+        print_info "*** WINDOWS GIT BASH USERS ***"
+        print_info ""
+        print_info "Please open a NEW PowerShell window and run these commands:"
+        print_info ""
+        print_info "  cd \"$(pwd -W 2>/dev/null || pwd)\""
+        print_info "  dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish"
+        print_info ""
+        print_info "After building, come back to this Git Bash window and run:"
+        print_info "  bash setup.sh"
+    else
+        print_info "Option 1: Install .NET SDK"
+        print_info "  Ubuntu/Debian: wget https://dot.net/v1/dotnet-install.sh && bash dotnet-install.sh"
+        print_info "  Or visit: https://docs.microsoft.com/dotnet/core/install/linux"
+        print_info ""
+        print_info "Option 2: Build on Windows first, then run this script"
+        print_info "  In PowerShell/CMD:"
+        print_info "  cd <project-directory>"
+        print_info "  dotnet publish ShoeCompany/ShoeCompany.csproj -c Release -o ./publish"
+        print_info "  Then run: bash setup.sh"
+    fi
     print_info ""
     exit 1
 fi
